@@ -1,0 +1,91 @@
+#!/bin/sh
+
+## ############################################################################
+## 
+## This is my solution to playing mkv files on PS3.
+## I am using the DS213+ which contains an older version of ffmpeg and PS3 kept
+## claiming that the mp4 files that ffmpeg remuxed where corrupt. Because of
+## that I decided to convert to .mpg instead (while allowing ffmpeg to convert
+## the audio).
+## The process is not a quick remux, but all that is converted is audio, so it
+## is quick enough (about 1.5 minutes for 1 hour of movie).
+## 
+## This script requires a path to look in as the first parameter.
+## 
+## Once installed it's executed every time a download is completed. There is
+## nothing that synology passes in, so you have to figure out yourself what to
+## process - in this case the script takes any .mkv file and if there is no
+## .mpg version already created then the file is processed.
+## 
+## The overal concept and initial script is based on:
+## http://forum.synology.com/enu/viewtopic.php?f=222&t=81266
+## 
+## The installation steps (i.e. run on download completion) are based on:
+## http://forum.synology.com/enu/viewtopic.php?f=38&t=75430
+## 
+## The idea for using .mpg rather than .mp4 is based on:
+## http://blown-to-bits.blogspot.co.uk/2011/07/synology-dnla-transcoding-alternative.html
+## and the fix for the missing audio in the mpg is based on:
+## http://stackoverflow.com/a/16324025
+## 
+## ############################################################################
+
+echo "Starting mkv processing"
+
+## go over mkv files in the directory provided
+for file in $(find $1 -name "*.mkv" -type f)
+do
+
+echo "================================================================================="
+echo "Processing: $file"
+
+convertedfile="${file%.mkv}.mpg"
+lockfile=$file.lock
+			
+if [ -f $convertedfile ];
+	then
+	echo "Skipping: $convertedfile already exists"
+	continue
+fi
+
+## check lock
+echo "Checking for $lockfile"
+if [ -f $lockfile ];
+	then
+	echo "Skipping: File is locked for processing"
+	continue
+fi
+
+## create lock
+touch "$lockfile"
+
+echo -e "--> converting with ffmpeg"
+ffmpeg  -y -i "$file" -vcodec copy -f mpegts -vbsf h264_mp4toannexb "$convertedfile" > /dev/null 2>&1
+ret=$?
+case "$ret" in
+	"0" )
+		## all went ok
+		echo "----> SUCCES"
+		#rm -rf "$file"
+		#synoindex -D "$file"
+		chmod 666 "$convertedfile"
+		synoindex -A "$convertedfile"
+		;;
+
+	* )
+		## there was an error
+		echo "----> FAIL"
+		rm -rf "$convertedfile"
+		;;
+esac
+    
+##  release lock
+rm -rf "$lockfile"
+
+done
+
+echo "================================================================================="
+echo "All files processed"
+
+
+exit 0
