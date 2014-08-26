@@ -1,0 +1,1 @@
+ping $1 > >(perl -nle 'print scalar(localtime), " ", $_')
