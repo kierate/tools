@@ -7,6 +7,12 @@ dping
 ping that also displays the date and time for the requests
 
 
+hist
+-----
+
+history + grep. Just a bit faster.
+
+
 convert_mkv_to_mpg
 ------------------
 
