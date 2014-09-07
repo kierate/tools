@@ -44,15 +44,19 @@ and the fix for the missing audio in the mpg is based on http://stackoverflow.co
 * Make it executable
 `chmod +x /volume1/tools/convert_mkv_to_mpg`
 
+* Stop DownloadStation (important to stop before proceeding to the next step)
+```
+/volume1/@appstore/DownloadStation/scripts/S25download.sh stop
+```
+
 * Modify the DownloadStation settings in `/usr/syno/etc/packages/DownloadStation/download/settings.json` by setting:
 ```
 "script-torrent-done-enabled": true,                               
 "script-torrent-done-filename": "/volume1/tools/convert_mkv_to_mpg /volume1/video", 
 ```
 
-* Restart the DownloadStation
+* Start the DownloadStation back up again
 ```
-/volume1/@appstore/DownloadStation/scripts/S25download.sh stop
 /volume1/@appstore/DownloadStation/scripts/S25download.sh start
 ```
 
